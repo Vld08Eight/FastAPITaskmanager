@@ -17,18 +17,11 @@ router = APIRouter(prefix='/users', tags=['user'])
 
 
 
-@router.get('/')
-async def get_all_users(db: Annotated[AsyncSession, Depends(get_db)],get_user: Annotated[dict, Depends(get_current_user)]):
-    if get_user.is_superuser:
-        result = await db.execute(select(User).where(User.is_active == True))
-        users = result.scalars().all()
-        return users
-    else:
-        raise HTTPException (
-            status_code=status.HTTP_405_METHOD_NOT_ALLOWED
-        )
+@router.get('/me')
+async def get_me(db: Annotated[AsyncSession, Depends(get_db)],get_user: Annotated[dict, Depends(get_current_user)]):
+    return get_user
 
-@router.get('/')
+@router.get('/{user_id}')
 async def get_user_by_id(db: Annotated[AsyncSession, Depends(get_db)],get_user: Annotated[dict, Depends(get_current_user)], user_id: int):
     if get_user.is_superuser == True or get_user.id == user_id:
         return user_crud.get(db, user_id)    
@@ -37,23 +30,6 @@ async def get_user_by_id(db: Annotated[AsyncSession, Depends(get_db)],get_user: 
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED
         )
 
-@router.get('/')
-async def get_user_by_email(db: Annotated[AsyncSession, Depends(get_db)],get_user: Annotated[dict, Depends(get_current_user)], email: str):
-    if get_user.is_superuser == True or get_user.email == email:
-        return user_crud.get_by_email(db, email)
-    else:
-        raise HTTPException (
-            status_code=status.HTTP_405_METHOD_NOT_ALLOWED
-        )
-
-@router.get('/')
-async def get_user_by_username(db: Annotated[AsyncSession, Depends(get_db)],get_user: Annotated[dict, Depends(get_current_user)], username: str):
-    if get_user.is_superuser == True or get_user.username == username:
-        return user_crud.get_by_username(db, username)
-    else:
-        raise HTTPException (
-            status_code=status.HTTP_405_METHOD_NOT_ALLOWED
-        )
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_user(db: Annotated[AsyncSession, Depends(get_db)], create_user: UserCreate):
@@ -66,7 +42,7 @@ async def create_user(db: Annotated[AsyncSession, Depends(get_db)], create_user:
     return user
     
 
-@router.put('/')
+@router.put('/me')
 async def update_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
@@ -79,7 +55,7 @@ async def update_user(
     return updated_user
 
 
-@router.delete('/')
+@router.delete('/me')
 async def delete_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)]

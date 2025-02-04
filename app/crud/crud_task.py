@@ -9,12 +9,12 @@ from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate
 
 class CRUDTask:
-    async def get_task(db: Annotated[AsyncSession, Depends(get_db)], user_id: int):
-        query = select(Task).where(Task.owner_id == user_id)
+    async def get_task(self,db: AsyncSession, user_id: int, task_id: int):
+        query = select(Task).where(Task.owner_id == user_id, Task.id == task_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
-    async def get_all_user_tasks(db: Annotated[AsyncSession, Depends(get_db)], user_id: int):
+    async def get_all_user_tasks(self,db: AsyncSession, user_id: int):
         tasks = db.scalars(select(Task).where(Task.owner_id == user_id))
         if not tasks:
             raise HTTPException(
@@ -23,7 +23,7 @@ class CRUDTask:
             )
         return tasks.all()
 
-    async def create(db: Annotated[AsyncSession, Depends(get_db)], task: TaskCreate):
+    async def create(self,db: AsyncSession, task: TaskCreate):
         db_obj = Task(
             title=task.title,
             description=task.description,
